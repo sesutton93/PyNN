@@ -43,6 +43,8 @@ class RecordingDevice(object):
             device_parameters.update(to_file=True, to_memory=False)
         self._all_ids = set([])
         self._connected = False
+        self.resetted = True
+        self.last_values = {}
         simulator.recording_devices.append(self)
         _set_status(self.device, device_parameters)
 
@@ -61,11 +63,19 @@ class RecordingDevice(object):
         ids = events['senders']
         values = events[nest_variable] * scale_factor # I'm hoping numpy optimises for the case where scale_factor = 1, otherwise should avoid this multiplication in that case
         data = {}
+        tmp_dict = {}
         for id in desired_ids:
             data[id] = values[ids==id]
             if variable != 'times':
-                initial_value = id.get_initial_value(variable)
-                data[id] = numpy.concatenate(([initial_value], data[id]))
+                if self.resetted:
+                    initial_value = id.get_initial_value(variable)
+                    data[id] = numpy.concatenate(([initial_value], data[id]))
+                else:
+                    data[id] = numpy.concatenate(([self.last_values[variable][id]], data[id]))
+                tmp_dict[id] = data[id][-1] 
+                
+        if variable != 'times':
+            self.last_values[variable] = tmp_dict
         return data
 
 
@@ -356,6 +366,7 @@ class Recorder(recording.Recorder):
         recording.Recorder.__init__(self, population, file)
         self._multimeter = Multimeter()
         self._spike_detector = SpikeDetector()
+        self._last_data_retrieval = simulator.state.t*pq.ms
 #        self._create_device()
 
 #    def _create_device(self, variable):
@@ -411,9 +422,14 @@ class Recorder(recording.Recorder):
         for variable in variables_to_include:
             if variable == 'spikes':
                 spike_times = self._spike_detector.get_spiketimes(self.filter_recorded('spikes', filter_ids))
+                mmin = numpy.min([numpy.min(spike_times[k]) for k in spike_times.keys() if len(spike_times[k]) != 0])*pq.ms
+                mmax = numpy.max([numpy.max(spike_times[k]) for k in spike_times.keys() if len(spike_times[k]) != 0])*pq.ms
                 t_stop = simulator.state.t*pq.ms # must run on all MPI nodes
+                t_start = self._last_data_retrieval
+                assert mmin >= self._last_data_retrieval and mmax <= t_stop
                 segment.spiketrains = [
                     neo.SpikeTrain(spike_times[id],
+                                   t_start=t_start,  
                                    t_stop=t_stop,
                                    units='ms',
                                    source_population=self.population.label,
@@ -422,7 +438,7 @@ class Recorder(recording.Recorder):
             else:
                 ids = self.filter_recorded(variable, filter_ids)
                 data = self._multimeter.get_data(variable, ids)
-                t_start = simulator.state.t_start*pq.ms
+                t_start = self._last_data_retrieval
                 sampling_period = simulator.state.dt*pq.ms # must run on all MPI nodes
                 if data:  # may be empty if none of the recorded cells are on this MPI node
                     signal_array = numpy.vstack(data.values())
@@ -439,8 +455,21 @@ class Recorder(recording.Recorder):
                             source_ids=source_ids)
                     )
         #import pdb; pdb.set_trace()
+        self._last_data_retrieval = simulator.state.t*pq.ms
         return segment
 
+    def _clear_data_from_native_recording_device(self):
+        nest.SetStatus(self._spike_detector.device,'n_events',0)
+        nest.SetStatus(self._multimeter.device,'n_events',0)
+        self._multimeter.resetted = False
+        self._spike_detector.resetted = False
+    
+    def store_to_cache(self, annotations={}):
+        # override Recorder.store_to_cache to catch reset
+        super.store_to_cache(annotations)
+        self._multimeter.resetted = True
+        self._spike_detector.resetted = True
+        
     def _local_count(self, variable, filter_ids):
         assert variable == 'spikes'
         #N = {}

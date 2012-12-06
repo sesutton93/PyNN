@@ -222,9 +222,18 @@ class Recorder(object):
             data = gather_blocks(data)
         if clear:
             self.cache.clear()
+            self._clear_data_from_native_recording_device()
         self.clear_flag = True
         
         return data
+    
+    def _clear_data_from_native_recording_device(self):
+        """
+        Function to be implemented by the given backend. 
+        It should make sure that data recorded in the simulator
+        associated with this recorder are removed from memory.
+        """
+        raise NotImplemented
 
     def write(self, variables, file=None, gather=False, filter_ids=None, clear=False):
         """Write recorded data to a Neo IO"""
