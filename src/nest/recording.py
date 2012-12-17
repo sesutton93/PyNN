@@ -422,11 +422,8 @@ class Recorder(recording.Recorder):
         for variable in variables_to_include:
             if variable == 'spikes':
                 spike_times = self._spike_detector.get_spiketimes(self.filter_recorded('spikes', filter_ids))
-                mmin = numpy.min([numpy.min(spike_times[k]) for k in spike_times.keys() if len(spike_times[k]) != 0])*pq.ms
-                mmax = numpy.max([numpy.max(spike_times[k]) for k in spike_times.keys() if len(spike_times[k]) != 0])*pq.ms
                 t_stop = simulator.state.t*pq.ms # must run on all MPI nodes
                 t_start = self._last_data_retrieval
-                assert mmin >= self._last_data_retrieval and mmax <= t_stop
                 segment.spiketrains = [
                     neo.SpikeTrain(spike_times[id],
                                    t_start=t_start,  
