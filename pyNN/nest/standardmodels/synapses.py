@@ -256,6 +256,7 @@ class Vogels2011Rule(synapses.Vogels2011Rule, NESTSynapseMixin):
         ('weight', 'weight', 1000.0),
         ('delay',  'delay'),
         ('tau',    'tau'),
+        ('w_max', 'Wmax', 1000.0),
         ('eta',    'eta'),
         ('rho',    'alpha', _translate_rho_forwards, _translate_rho_reverse),
     )

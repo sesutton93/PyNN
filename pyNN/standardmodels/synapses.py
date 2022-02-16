@@ -435,6 +435,7 @@ class Vogels2011Rule(StandardSynapseType):
         'weight':    0.0,
         'delay':     None,
         'tau':       20.0,
+        'w_max':     0.3,
         'eta':       1e-10,
         'rho':       3.0
     }

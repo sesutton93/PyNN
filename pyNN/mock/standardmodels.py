@@ -288,17 +288,6 @@ class STDPMechanism(synapses.STDPMechanism):
             d = state.dt
         return d
 
-class Vogels2011Rule(synapses.Vogels2011Rule):
-    __doc__ = synapses.Vogels2011Rule.__doc__
-
-    translations = build_translations(
-        ('weight', 'WEIGHT'),
-        ('delay', 'DELAY'),
-        ('tau', 'TAU'),
-        ('eta', 'eta'),
-        ('rho', 'rho'),
-    )
-
 class AdditiveWeightDependence(synapses.AdditiveWeightDependence):
     __doc__ = synapses.AdditiveWeightDependence.__doc__
 
@@ -355,3 +344,14 @@ class SpikePairRule(synapses.SpikePairRule):
         ('A_minus',   'aLTD'),
     )
 
+class Vogels2011Rule(synapses.Vogels2011Rule):
+    __doc__ = synapses.Vogels2011Rule.__doc__
+
+    translations = build_translations(
+        ('weight', 'WEIGHT'),
+        ('delay', 'DELAY'),
+        ('tau', 'TAU'),
+        ('w_max', 'wmax'),
+        ('eta', 'eta'),
+        ('rho', 'rho'),
+    )
