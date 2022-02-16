@@ -211,6 +211,7 @@ def _translate_A_minus_forwards(**parameters):
         alpha = A_minus / A_plus
     return alpha
 
+
 def _translate_A_minus_reverse(**parameters):
     alpha = parameters["alpha"]
     lambda_ = parameters["lambda"]
@@ -232,3 +233,32 @@ class SpikePairRule(synapses.SpikePairRule):
 
     )
     possible_models = set(['stdp_synapse']) #,'stdp_synapse_hom'])
+
+
+def _translate_rho_forwards(**parameters):
+    rho = parameters["rho"]
+    tau = parameters["tau"]
+    alpha = 2. * tau * rho
+    return alpha
+
+
+def _translate_rho_reverse(**parameters):
+    alpha = parameters["alpha"]
+    tau = parameters["tau"]
+    rho = alpha / tau / 2.
+    return rho
+
+
+class Vogels2011Rule(synapses.Vogels2011Rule, NESTSynapseMixin):
+    __doc__ = synapses.Vogels2011Rule.__doc__
+
+    translations = build_translations(
+        ('weight', 'weight', 1000.0),
+        ('delay',  'delay'),
+        ('tau',    'tau'),
+        ('eta',    'eta'),
+        ('rho',    'alpha', _translate_rho_forwards, _translate_rho_reverse),
+    )
+
+    nest_name = 'vogels_sprekeler_synapse'
+

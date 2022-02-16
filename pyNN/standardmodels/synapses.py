@@ -21,7 +21,7 @@ try:
     long
 except NameError:
     long = int
-from pyNN import descriptions
+from pyNN import descriptions, errors
 from pyNN.standardmodels import StandardSynapseType, STDPWeightDependence, STDPTimingDependence
 from pyNN.parameters import ParameterSpace
 
@@ -44,7 +44,6 @@ class ElectricalSynapse(StandardSynapseType):
     default_parameters = {
         'weight': 0.0  # the (bidirectional) conductance of the gap junction (uS)
     }
-
 
 class TsodyksMarkramSynapse(StandardSynapseType):
     """
@@ -416,7 +415,7 @@ class SpikePairRule(STDPTimingDependence):
         STDPTimingDependence.__init__(self, **parameters)
 
 
-class Vogels2011Rule(STDPTimingDependence):
+class Vogels2011Rule(StandardSynapseType):
     """
     Timing-dependence rule from
 
@@ -433,7 +432,9 @@ class Vogels2011Rule(STDPTimingDependence):
     """
 
     default_parameters = {
-        'tau': 20.0,
-        'eta': 1e-10,
-        'rho': 3.0
+        'weight':    0.0,
+        'delay':     None,
+        'tau':       20.0,
+        'eta':       1e-10,
+        'rho':       3.0
     }
