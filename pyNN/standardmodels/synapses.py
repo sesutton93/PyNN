@@ -432,7 +432,7 @@ class Vogels2011Rule(StandardSynapseType):
     """
 
     default_parameters = {
-        'weight':    0.0,
+        'weight':    0.01,
         'delay':     None,
         'tau':       20.0,
         'w_max':     1.0,
